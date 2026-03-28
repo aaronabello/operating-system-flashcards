@@ -1,0 +1,1487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>OS Reviewer with Flashcards and Transes - Chapters 2 and 3</title>
+  <style>
+    * { box-sizing: border-box; }
+    :root {
+      --bg1: #eef2ff;
+      --bg2: #f8fafc;
+      --card: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --line: #d1d5db;
+      --primary: #4f46e5;
+      --primary-soft: #eef2ff;
+      --shadow: 0 12px 32px rgba(0,0,0,0.10);
+      --radius: 24px;
+    }
+    html, body { min-height: 100%; }
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: linear-gradient(135deg, var(--bg1), var(--bg2));
+      color: var(--text);
+      -webkit-text-size-adjust: 100%;
+      padding-bottom: max(16px, env(safe-area-inset-bottom));
+    }
+    .app {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 18px;
+    }
+    .header {
+      background: rgba(255,255,255,0.92);
+      backdrop-filter: blur(10px);
+      border-radius: 24px;
+      padding: 22px;
+      box-shadow: var(--shadow);
+      margin-bottom: 18px;
+    }
+    h1 {
+      margin: 0 0 8px;
+      font-size: clamp(1.5rem, 3.5vw, 2rem);
+      line-height: 1.2;
+    }
+    .subtitle {
+      margin: 0;
+      color: #4b5563;
+      line-height: 1.55;
+      font-size: 0.98rem;
+    }
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 18px;
+    }
+    .control-box, .stat {
+      background: var(--card);
+      border-radius: 18px;
+      padding: 14px;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+    }
+    label {
+      display: block;
+      font-size: 0.9rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    input, select, button {
+      font-size: 16px;
+    }
+    input, select {
+      width: 100%;
+      min-height: 48px;
+      padding: 12px 14px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      outline: none;
+      background: white;
+      color: var(--text);
+    }
+    input:focus, select:focus {
+      border-color: #6366f1;
+      box-shadow: 0 0 0 4px rgba(99,102,241,0.15);
+    }
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin: 16px 0 18px;
+    }
+    .stat .label {
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+    .stat .value {
+      font-size: 1.2rem;
+      font-weight: 700;
+    }
+    .progress-bar {
+      height: 10px;
+      width: 100%;
+      background: #e5e7eb;
+      border-radius: 999px;
+      overflow: hidden;
+      margin-top: 10px;
+    }
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #4f46e5, #818cf8);
+      border-radius: 999px;
+      transition: width 0.2s ease;
+    }
+    .view-switch {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 16px;
+    }
+    .view-pill {
+      border: 1px solid #c7d2fe;
+      background: #ffffff;
+      color: #3730a3;
+      padding: 10px 14px;
+      border-radius: 999px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+    }
+    .view-pill.active {
+      background: #4f46e5;
+      color: #ffffff;
+      border-color: #4f46e5;
+    }
+    .card-wrap {
+      perspective: 1200px;
+      min-height: min(66vh, 560px);
+    }
+    .card {
+      position: relative;
+      width: 100%;
+      min-height: min(66vh, 560px);
+      transform-style: preserve-3d;
+      transition: transform 0.6s ease;
+      cursor: pointer;
+      touch-action: pan-y;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .card.flipped { transform: rotateY(180deg); }
+    .face {
+      position: absolute;
+      inset: 0;
+      background: var(--card);
+      border-radius: 28px;
+      padding: 24px;
+      box-shadow: 0 16px 40px rgba(0,0,0,0.10);
+      backface-visibility: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 16px;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .back {
+      transform: rotateY(180deg);
+      background: linear-gradient(135deg, #ffffff, #f5f7ff);
+    }
+    .chapter-badge {
+      align-self: flex-start;
+      background: var(--primary-soft);
+      color: #4338ca;
+      border-radius: 999px;
+      padding: 8px 12px;
+      font-size: 0.86rem;
+      font-weight: 700;
+    }
+    .prompt-label {
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: var(--muted);
+      letter-spacing: 0.08em;
+      margin: 14px 0 8px;
+    }
+    .card-text {
+      font-size: clamp(1.06rem, 2.3vw, 1.28rem);
+      line-height: 1.65;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .hint {
+      color: var(--muted);
+      font-size: 0.92rem;
+      line-height: 1.45;
+    }
+    .button-row {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 18px;
+      position: sticky;
+      bottom: 12px;
+      z-index: 5;
+      padding-bottom: max(0px, env(safe-area-inset-bottom));
+    }
+    button {
+      border: none;
+      border-radius: 16px;
+      min-height: 50px;
+      padding: 14px 16px;
+      font-weight: 700;
+      cursor: pointer;
+      background: #111827;
+      color: white;
+      transition: transform 0.15s ease, opacity 0.15s ease;
+      box-shadow: 0 8px 18px rgba(0,0,0,0.10);
+    }
+    button:hover { transform: translateY(-1px); }
+    button:active { transform: scale(0.99); }
+    button.secondary {
+      background: #e5e7eb;
+      color: #111827;
+    }
+    button.accent { background: var(--primary); }
+    .hidden { display: none !important; }
+    .empty {
+      background: var(--card);
+      padding: 28px;
+      border-radius: 28px;
+      box-shadow: 0 16px 40px rgba(0,0,0,0.10);
+      text-align: center;
+      line-height: 1.7;
+    }
+    .notes-container {
+      display: grid;
+      gap: 14px;
+    }
+    details.note-card {
+      background: #ffffff;
+      border-radius: 22px;
+      box-shadow: 0 16px 40px rgba(0,0,0,0.10);
+      overflow: hidden;
+    }
+    details.note-card summary {
+      list-style: none;
+      cursor: pointer;
+      padding: 18px 20px;
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      justify-content: space-between;
+      font-weight: 700;
+      font-size: 1rem;
+    }
+    details.note-card summary::-webkit-details-marker {
+      display: none;
+    }
+    .summary-left {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      min-width: 0;
+    }
+    .summary-title {
+      min-width: 0;
+      line-height: 1.4;
+    }
+    .summary-arrow {
+      color: var(--muted);
+      font-size: 1.1rem;
+      transition: transform 0.2s ease;
+    }
+    details[open] .summary-arrow {
+      transform: rotate(180deg);
+    }
+    .note-body {
+      padding: 0 20px 20px;
+      border-top: 1px solid #eef2ff;
+    }
+    .note-body ul {
+      margin: 14px 0 0;
+      padding-left: 20px;
+    }
+    .note-body li {
+      margin-bottom: 10px;
+      line-height: 1.65;
+    }
+    .footer-note {
+      margin-top: 12px;
+      color: var(--muted);
+      font-size: 0.92rem;
+      text-align: center;
+      line-height: 1.5;
+    }
+    @media (max-width: 980px) {
+      .controls { grid-template-columns: 1fr 1fr; }
+      .button-row { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .stats { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 640px) {
+      .app { padding: 12px; }
+      .header { padding: 16px; border-radius: 20px; }
+      .controls, .stats, .button-row { grid-template-columns: 1fr; }
+      .control-box, .stat { border-radius: 16px; }
+      .face { padding: 18px; border-radius: 22px; }
+      .card-wrap, .card { min-height: 62vh; }
+      .card-text { line-height: 1.7; }
+      .button-row {
+        background: rgba(238,242,255,0.85);
+        backdrop-filter: blur(8px);
+        border-radius: 20px;
+        padding: 10px;
+      }
+      details.note-card summary {
+        padding: 16px;
+        align-items: flex-start;
+      }
+      .note-body {
+        padding: 0 16px 16px;
+      }
+      .footer-note { margin-bottom: 6px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="header">
+      <h1>Operating Systems Reviewer</h1>
+      <p class="subtitle">Study in two ways: use flashcards for fast recall, or open the PPT transes view for mobile reading and review. Tap flashcards to flip them. On phones, swipe left for next and swipe right for previous.</p>
+
+      <div class="view-switch">
+        <button class="view-pill active" id="flashcardsViewBtn" type="button">Flashcards</button>
+        <button class="view-pill" id="transesViewBtn" type="button">PPT Transes</button>
+      </div>
+
+      <div class="controls">
+        <div class="control-box">
+          <label for="chapterFilter">Filter by chapter</label>
+          <select id="chapterFilter">
+            <option value="all">All Chapters</option>
+            <option value="2">Chapter 2</option>
+            <option value="3">Chapter 3</option>
+          </select>
+        </div>
+        <div class="control-box">
+          <label for="searchInput">Search</label>
+          <input id="searchInput" type="text" placeholder="Type a keyword like process, fork, socket, boot..." />
+        </div>
+        <div class="control-box" id="orderBox">
+          <label for="modeSelect">Order</label>
+          <select id="modeSelect">
+            <option value="normal">Normal Order</option>
+            <option value="random">Shuffle Current Results</option>
+          </select>
+        </div>
+        <div class="control-box" id="jumpBox">
+          <label for="jumpInput">Jump to card number</label>
+          <input id="jumpInput" type="number" min="1" placeholder="Enter number" />
+        </div>
+        <div class="control-box" id="notesToolsBox">
+          <label>Transes tools</label>
+          <div style="display:grid;gap:10px;">
+            <button type="button" class="secondary" id="expandAllBtn">Expand All</button>
+            <button type="button" class="secondary" id="collapseAllBtn">Collapse All</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    </div>
+
+    <div class="stats">
+      <div class="stat">
+        <div class="label" id="countLabel">Showing</div>
+        <div class="value" id="showingCount">0</div>
+      </div>
+      <div class="stat">
+        <div class="label" id="positionLabel">Current Card</div>
+        <div class="value" id="currentPosition">0 / 0</div>
+      </div>
+      <div class="stat">
+        <div class="label" id="sideLabel">Current Side</div>
+        <div class="value" id="currentSide">Question</div>
+      </div>
+      <div class="stat">
+        <div class="label" id="modeLabel">Study Mode</div>
+        <div class="value" id="modeStatus">Flashcards</div>
+      </div>
+    </div>
+
+    <div id="contentArea"></div>
+
+    <div class="button-row" id="flashcardButtons">
+      <button class="secondary" id="prevBtn" type="button">Previous</button>
+      <button class="accent" id="flipBtn" type="button">Flip Card</button>
+      <button class="secondary" id="nextBtn" type="button">Next</button>
+      <button class="secondary" id="shuffleBtn" type="button">Shuffle</button>
+      <button class="secondary" id="resetBtn" type="button">Reset Filters</button>
+    </div>
+
+    <p class="footer-note">Upload this file to GitHub as <strong>index.html</strong>, then enable GitHub Pages in your repository settings.</p>
+  </div>
+
+  <script>
+    const STORAGE_KEY = 'os-reviewer-state-v2';
+    const rawCards = String.raw`
+2§§§It provides an environment for program execution and offers services to users and programs.§§§Operating system
+2§§§These are the user-helpful operating-system services: UI, program execution, I/O, file-system manipulation, communications, and error detection.§§§User-helpful OS services
+2§§§It is the OS service that lets users interact with the system through CLI, GUI, touch-screen, or batch.§§§User interface
+2§§§It is the OS service that loads a program into memory, runs it, and ends it normally or abnormally.§§§Program execution
+2§§§It is the OS service used when a running program needs access to a file or I/O device.§§§I/O operations
+2§§§It is the OS service for reading, writing, creating, deleting, searching, listing, and managing permissions of files and directories.§§§File-system manipulation
+2§§§These are the two communication methods mentioned in OS services.§§§Shared memory and message passing
+2§§§It is the OS service that keeps the system aware of possible hardware, I/O, and program errors.§§§Error detection
+2§§§This improves the ability of users and programmers to use the system efficiently.§§§Debugging facilities
+2§§§These are the system-efficiency OS functions: resource allocation, logging, and protection and security.§§§Efficient-operation OS functions
+2§§§It is the OS function that assigns resources like CPU cycles, memory, file storage, and I/O devices.§§§Resource allocation
+2§§§It keeps track of which users use how much and what kinds of computer resources.§§§Logging
+2§§§It ensures controlled access to system resources and defends against invalid access attempts.§§§Protection and security
+2§§§It specifically means ensuring that all access to system resources is controlled.§§§Protection
+2§§§It specifically means defending the system from outsiders and requiring user authentication.§§§Security
+2§§§It allows direct command entry to the operating system.§§§CLI
+2§§§These are multiple flavors of command interpreters.§§§Shells
+2§§§It fetches a command from the user and executes it.§§§Command-line interpreter
+2§§§It is a user-friendly desktop metaphor interface that uses icons, mouse, keyboard, and monitor.§§§GUI
+2§§§It is the research center where the GUI was invented.§§§Xerox PARC
+2§§§Microsoft Windows is described as this combination of interfaces.§§§GUI with command shell
+2§§§Mac OS X is described as this interface over a UNIX kernel.§§§Aqua GUI
+2§§§Unix and Linux are described as this base interface with optional GUI interfaces.§§§CLI with optional GUI
+2§§§These are optional GUI interfaces mentioned for Unix and Linux.§§§CDE, KDE, and GNOME
+2§§§These devices require new interfaces because a mouse is not possible or not desired.§§§Touchscreen devices
+2§§§These are used for action and selection in touchscreen interfaces.§§§Gestures
+2§§§It is used for text entry in touchscreen interfaces.§§§Virtual keyboard
+2§§§These are also used as input in touchscreen interfaces.§§§Voice commands
+2§§§It is the programming interface to the services provided by the OS.§§§System call
+2§§§System calls are typically written in these high-level languages.§§§C or C++
+2§§§It is the high-level interface programs usually use instead of direct system calls.§§§API
+2§§§These are the three most common APIs in the chapter.§§§Win32 API, POSIX API, and Java API
+2§§§It is the API for Windows systems.§§§Win32 API
+2§§§It is the API for POSIX-based systems such as UNIX, Linux, and Mac OS X.§§§POSIX API
+2§§§It is the API for the Java virtual machine.§§§Java API
+2§§§It is associated with each system call and is used to index the system-call table.§§§System-call number
+2§§§It maintains a table indexed according to system-call numbers.§§§System-call interface
+2§§§It hides most OS interface details from the programmer.§§§API
+2§§§It manages the hidden details through functions built into compiler libraries.§§§Run-time support library
+2§§§These are the three general methods of passing parameters to the OS.§§§Registers, block/table in memory, and stack
+2§§§It is the simplest parameter-passing method.§§§Registers
+2§§§This method stores parameters in memory and passes the block address in a register.§§§Block or table method
+2§§§These operating systems use the block/table method according to the slides.§§§Linux and Solaris
+2§§§This method pushes parameters onto the stack for the OS to pop.§§§Stack method
+2§§§These methods do not limit the number or length of parameters.§§§Block/table and stack methods
+2§§§These are the six main categories of system calls in the chapter.§§§Process control, file management, device management, information maintenance, communications, and protection
+2§§§This system-call category includes create process, terminate process, load, execute, and wait.§§§Process control
+2§§§This system-call category includes create, delete, open, close, read, write, and reposition file.§§§File management
+2§§§This system-call category includes request, release, read, write, and set device attributes.§§§Device management
+2§§§This system-call category includes get/set time, date, system data, and attributes.§§§Information maintenance
+2§§§This system-call category includes create/delete communication connection and send/receive messages.§§§Communications
+2§§§This system-call category includes controlling access, permissions, and user access.§§§Protection
+2§§§In the standard C library example, this library call eventually uses write().§§§printf()
+2§§§It is the system call used by printf() in the standard C library example.§§§write()
+2§§§This example system is single-tasking and has no operating system.§§§Arduino
+2§§§It loads an Arduino program into flash memory.§§§Boot loader
+2§§§This Unix variant is used as the multitasking example.§§§FreeBSD
+2§§§It creates a new process in the FreeBSD example.§§§fork()
+2§§§It loads a new program into the process after fork().§§§exec()
+2§§§It is called by the parent to wait for the child process.§§§wait()
+2§§§This exit code in FreeBSD means no error.§§§0
+2§§§These exit codes in FreeBSD indicate an error.§§§Codes greater than 0
+2§§§They provide a convenient environment for program development and execution.§§§System programs
+2§§§These are the divisions of system programs in the chapter.§§§File manipulation, status information, programming-language support, program loading and execution, communications, background services, and application programs
+2§§§This, not the actual system calls, defines most users’ view of the operating system.§§§System programs
+2§§§It includes create, delete, copy, rename, print, dump, and list files and directories.§§§File management
+2§§§It includes date, time, available memory, disk space, number of users, and performance details.§§§Status information
+2§§§It is used in some systems to store and retrieve configuration information.§§§Registry
+2§§§It includes text editors and commands that search or transform text.§§§File modification
+2§§§It includes compilers, assemblers, debuggers, and interpreters.§§§Programming-language support
+2§§§It includes absolute loaders, relocatable loaders, linkage editors, overlay-loaders, and debuggers.§§§Program loading and execution
+2§§§It creates virtual connections among processes, users, and computer systems.§§§Communications
+2§§§These are launched at boot time and may run until shutdown.§§§Background services
+2§§§These background services run in user context, not kernel context.§§§Services, subsystems, or daemons
+2§§§These are run by users and are not typically considered part of the OS.§§§Application programs
+2§§§It is the compiled file designed to be loaded into any physical memory location.§§§Relocatable object file
+2§§§It combines object files into a single binary executable and brings in libraries.§§§Linker
+2§§§It brings the binary executable into memory for execution.§§§Loader
+2§§§It assigns final addresses to program parts and adjusts code and data accordingly.§§§Relocation
+2§§§These are dynamically linked libraries in Windows.§§§DLLs
+2§§§They are usually not executable on other operating systems because each OS has its own system calls and file formats.§§§Apps compiled on one OS
+2§§§These interpreted languages can help apps become multi-operating system.§§§Python and Ruby
+2§§§This language model can help apps run on multiple systems by using a VM.§§§Java
+2§§§It is the architecture equivalent of an API.§§§ABI
+2§§§It defines how binary components interface on a given operating system and architecture.§§§Application Binary Interface
+2§§§They should be defined first when designing an operating system.§§§Goals and specifications
+2§§§These are the two groups of goals in OS design.§§§User goals and system goals
+2§§§These user goals are stated in the chapter.§§§Convenient, easy to learn, reliable, safe, and fast
+2§§§These system goals are stated in the chapter.§§§Easy to design, implement, and maintain; flexible, reliable, error-free, and efficient
+2§§§It is the highly creative task that OS specification and design belong to.§§§Software engineering
+2§§§It means what needs to be done.§§§Policy
+2§§§It means how to do something.§§§Mechanism
+2§§§It is the important principle that allows flexibility when policy changes.§§§Separate policy from mechanism
+2§§§These were used for early operating systems.§§§Assembly language
+2§§§These later system programming languages followed assembly.§§§Algol and PL/1
+2§§§These are the commonly used languages now for much of the OS.§§§C and C++
+2§§§This part of the OS is usually kept in assembly.§§§Lowest levels
+2§§§This part of the OS is usually written in C.§§§Main body
+2§§§These are also used for systems programs.§§§Scripting languages like PERL, Python, and shell scripts
+2§§§It is easier with high-level languages, but the system may be slower.§§§Portability
+2§§§It allows an operating system to run on non-native hardware.§§§Emulation
+2§§§It is how a general-purpose operating system is described in size.§§§A very large program
+2§§§These are the structures mentioned for operating systems.§§§Simple, more complex, layered, and microkernel
+2§§§It is the example of simple structure.§§§MS-DOS
+2§§§It is the example of a more complex structure.§§§UNIX
+2§§§It is the example of microkernel structure.§§§Mach
+2§§§It limited the structuring of original UNIX.§§§Hardware functionality
+2§§§These are the two separable parts of original UNIX.§§§System programs and the kernel
+2§§§It is everything below the system-call interface and above the physical hardware.§§§Kernel
+2§§§It provides the file system, CPU scheduling, memory management, and other OS functions in UNIX.§§§Kernel
+2§§§Linux system structure is described as this combination.§§§Monolithic plus modular design
+2§§§It divides the OS into levels built on top of lower layers.§§§Layered approach
+2§§§It is layer 0 in the layered approach.§§§Hardware
+2§§§It is the highest layer in the layered approach.§§§User interface
+2§§§They move as much as possible from the kernel into user space.§§§Microkernels
+2§§§It is the communication method used between user modules in microkernels.§§§Message passing
+2§§§These are the benefits of microkernels.§§§Easier to extend, easier to port, more reliable, and more secure
+2§§§It is the main drawback of microkernels.§§§Performance overhead
+2§§§They are loadable kernel modules used by many modern OSes.§§§Modules
+2§§§This approach is used by modules according to the chapter.§§§Object-oriented approach
+2§§§They are like layers but with more flexibility.§§§Modules
+2§§§These operating systems are given as examples using modules.§§§Linux and Solaris
+2§§§They combine multiple design approaches to address performance, security, and usability needs.§§§Hybrid systems
+2§§§Windows is described as this hybrid combination.§§§Mostly monolithic plus microkernel
+2§§§Mac OS X is described as this hybrid combination.§§§Layered, Mach microkernel, BSD parts, I/O kit, and kernel extensions
+2§§§It is the Mac OS X kernel partly based on Mach.§§§Darwin
+2§§§It is Apple’s mobile operating system for iPhone and iPad.§§§iOS
+2§§§It is structured on Mac OS X with added functionality.§§§iOS
+2§§§These applications do not run natively on iOS according to the chapter.§§§OS X applications
+2§§§This CPU architecture is associated with iOS in the slides.§§§ARM
+2§§§It is the API used for iOS app development.§§§Cocoa Touch Objective-C API
+2§§§It provides graphics, audio, and video in iOS.§§§Media services layer
+2§§§It provides cloud computing and databases in iOS.§§§Core services
+2§§§It is the mobile OS developed by the Open Handset Alliance, mostly Google.§§§Android
+2§§§Android is based on this kernel, but modified.§§§Linux kernel
+2§§§These are the management functions Android provides.§§§Process, memory, and device-driver management
+2§§§This is added by Android beyond the usual kernel management.§§§Power management
+2§§§It includes the core set of libraries and the Dalvik virtual machine.§§§Android runtime environment
+2§§§These are used to develop Android apps according to the slides.§§§Java plus Android API
+2§§§They are compiled to bytecode, translated to executable, and run in the Dalvik VM.§§§Java class files
+2§§§These are libraries included in Android according to the chapter.§§§Webkit, SQLite, multimedia, and smaller libc
+2§§§These are the steps when generating an operating system from scratch.§§§Write source code, configure, compile, install, and boot
+2§§§This site is the source for downloading Linux source code in the chapter.§§§kernel.org
+2§§§This command configures the Linux kernel.§§§make menuconfig
+2§§§This command compiles the Linux kernel.§§§make
+2§§§It is the kernel image produced by compilation.§§§vmlinuz
+2§§§This command compiles kernel modules.§§§make modules
+2§§§This command installs kernel modules into the system.§§§make modules_install
+2§§§This command installs the new kernel on the system.§§§make install
+2§§§This is where execution starts when power is initialized.§§§Fixed memory location
+2§§§It is the small code in ROM or EEPROM that locates the kernel, loads it, and starts it.§§§Bootstrap loader or BIOS
+2§§§It replaces BIOS in modern systems.§§§UEFI
+2§§§It is the common bootstrap loader that can select kernels, disks, versions, and options.§§§GRUB
+2§§§It is a boot state often provided by boot loaders.§§§Single user mode
+2§§§It is the act of finding and fixing bugs.§§§Debugging
+2§§§It improves system performance by removing bottlenecks.§§§Performance tuning
+2§§§They contain error information generated by the operating system.§§§Log files
+2§§§It is the file that captures process memory when an application fails.§§§Core dump file
+2§§§It is the file that contains kernel memory when the operating system fails.§§§Crash dump file
+2§§§It is the periodic sampling of the instruction pointer to find trends.§§§Profiling
+2§§§It is the program used as a Linux example for performance display.§§§top
+2§§§It is the Windows example used for performance display.§§§Task Manager
+2§§§It collects data for a specific event such as a system call invocation.§§§Tracing
+2§§§It traces system calls invoked by a process.§§§strace
+2§§§It is the source-level debugger mentioned in the chapter.§§§gdb
+2§§§It is the collection of Linux performance tools mentioned.§§§perf
+2§§§It collects network packets.§§§tcpdump
+2§§§It stands for BPF Compiler Collection.§§§BCC
+2§§§It is the original tracing tool also mentioned with BCC.§§§DTrace
+2§§§It is the BCC example that traces disk I/O activity.§§§disksnoop.py
+2§§§It is the figure or diagram named A View of Operating System Services.§§§A View of Operating System Services
+2§§§It is the figure or diagram named Bourne Shell Command Interpreter.§§§Bourne Shell Command Interpreter
+2§§§It is the figure or diagram named The Mac OS X GUI.§§§The Mac OS X GUI
+2§§§It is the figure or diagram named Example of System Calls.§§§Example of System Calls
+2§§§It is the figure or diagram named Example of Standard API.§§§Example of Standard API
+2§§§It is the figure or diagram named API – System Call – OS Relationship.§§§API – System Call – OS Relationship
+2§§§It is the figure or diagram named Parameter Passing via Table.§§§Parameter Passing via Table
+2§§§It is the figure or diagram named Traditional UNIX System Structure.§§§Traditional UNIX System Structure
+2§§§It is the figure or diagram named Microkernel System Structure.§§§Microkernel System Structure
+2§§§It is the figure or diagram named macOS and iOS Structure.§§§macOS and iOS Structure
+2§§§It is the figure or diagram named Android Architecture.§§§Android Architecture
+2§§§It is the figure or diagram named Linux bcc/BPF Tracing Tools.§§§Linux bcc/BPF Tracing Tools
+3§§§It is a program in execution.§§§Process
+3§§§It is a passive entity stored on disk.§§§Program
+3§§§It is the active form created when an executable is loaded into memory.§§§Process
+3§§§This section contains the program code of a process.§§§Text section
+3§§§These are included in the current activity of a process.§§§Program counter and processor registers
+3§§§It contains temporary data such as parameters, return addresses, and local variables.§§§Stack
+3§§§It contains global variables.§§§Data section
+3§§§It contains memory dynamically allocated during run time.§§§Heap
+3§§§These are ways a program can start executing.§§§GUI mouse clicks or command-line entry
+3§§§This shows that one program can become several processes.§§§Multiple users executing the same program
+3§§§It is the state in which the process is being created.§§§New
+3§§§It is the state in which instructions are being executed.§§§Running
+3§§§It is the state in which the process waits for some event to occur.§§§Waiting
+3§§§It is the state in which the process waits to be assigned to a processor.§§§Ready
+3§§§It is the state after the process has finished execution.§§§Terminated
+3§§§It is the information associated with each process.§§§Process Control Block
+3§§§It is another name for the Process Control Block.§§§Task control block
+3§§§It stores the location of the next instruction to execute.§§§Program counter
+3§§§They store the contents of all process-centric registers.§§§CPU registers
+3§§§It includes priorities and scheduling queue pointers.§§§CPU scheduling information
+3§§§It includes memory allocated to the process.§§§Memory-management information
+3§§§It includes CPU used, elapsed clock time, and time limits.§§§Accounting information
+3§§§It includes allocated devices and the list of open files.§§§I/O status information
+3§§§So far, the process has this number of execution threads.§§§One
+3§§§They are multiple threads of control within a process.§§§Threads
+3§§§These must be stored in the PCB when multiple threads exist.§§§Thread details and multiple program counters
+3§§§This chapter explores threads in detail.§§§Chapter 4
+3§§§It is the C structure used to represent a process in Linux.§§§task_struct
+3§§§It is the field for the process identifier in task_struct.§§§pid
+3§§§It is the field for the state of the process.§§§state
+3§§§It is the field for scheduling information.§§§time_slice
+3§§§It is the field pointing to the parent process.§§§parent
+3§§§It is the field containing the list of child processes.§§§children
+3§§§It is the field for the list of open files.§§§files
+3§§§It is the field for the address space of the process.§§§mm
+3§§§It selects among available processes for next execution on a CPU core.§§§Process scheduler
+3§§§Its goal is to maximize CPU use and quickly switch processes onto the CPU.§§§Process scheduling
+3§§§It is the set of all processes in main memory that are ready and waiting to execute.§§§Ready queue
+3§§§They are the sets of processes waiting for an event such as I/O.§§§Wait queues
+3§§§Processes move among these during execution.§§§Scheduling queues
+3§§§It occurs when the CPU switches from one process to another.§§§Context switch
+3§§§It is where the process context is represented.§§§PCB
+3§§§It is what context-switch time is considered because no useful work is done.§§§Pure overhead
+3§§§This affects context-switch time along with hardware support.§§§OS and PCB complexity
+3§§§This hardware feature allows multiple contexts to be loaded at once.§§§Multiple sets of registers per CPU
+3§§§These early systems allowed only one process to run while others were suspended.§§§Early versions of iOS
+3§§§It is the single process controlled via the user interface in iOS.§§§Foreground process
+3§§§These are in memory and running but not on the display in iOS.§§§Background processes
+3§§§This Android component lets a background process continue tasks even if suspended.§§§Service
+3§§§It has no user interface and uses little memory.§§§Service
+3§§§They create child processes and form a tree of processes.§§§Parent processes
+3§§§It is the identifier used to manage a process.§§§pid
+3§§§These are the resource-sharing options in process creation.§§§Share all, share subset, or share none
+3§§§These are the execution options in process creation.§§§Execute concurrently or parent waits
+3§§§These are the address-space options for a child process.§§§Duplicate of parent or load a new program
+3§§§It creates a new process in UNIX.§§§fork()
+3§§§It replaces the child’s memory space with a new program after fork().§§§exec()
+3§§§The parent uses it to wait for the child to terminate.§§§wait()
+3§§§It is the system call used when a process asks the OS to delete it after its last statement.§§§exit()
+3§§§It is the system call a parent may use to terminate a child.§§§abort()
+3§§§These are reasons a parent may terminate a child.§§§Exceeded resources, task no longer needed, or parent is exiting
+3§§§It is the rule that all descendants are terminated when a process terminates in some OSes.§§§Cascading termination
+3§§§It is the system call that returns status information and the pid of the terminated child.§§§wait()
+3§§§It is the exact form shown for waiting on a child.§§§pid = wait(&status);
+3§§§It is a process whose parent did not invoke wait().§§§Zombie
+3§§§It is a process whose parent terminated without invoking wait().§§§Orphan
+3§§§They are the Android importance levels from most to least important.§§§Foreground, visible, service, background, and empty
+3§§§Android begins terminating processes from this end of the importance hierarchy.§§§Least important
+3§§§This browser is used as the multiprocess architecture example.§§§Google Chrome
+3§§§It manages user interface, disk I/O, and network I/O in Chrome.§§§Browser process
+3§§§It renders web pages and handles HTML and JavaScript in Chrome.§§§Renderer process
+3§§§A new one of these is created for each website opened in Chrome.§§§Renderer process
+3§§§It restricts disk and network I/O in the renderer to reduce security risks.§§§Sandbox
+3§§§Chrome has one of these for each type of plug-in.§§§Plug-in process
+3§§§They can affect or be affected by other processes and may share data.§§§Cooperating processes
+3§§§These are the reasons for cooperating processes.§§§Information sharing, computation speedup, modularity, and convenience
+3§§§It is needed by cooperating processes.§§§Interprocess communication
+3§§§These are the two IPC models in the chapter.§§§Shared memory and message passing
+3§§§It is the paradigm in which a producer creates data and a consumer uses it.§§§Producer-consumer problem
+3§§§It is the producer-consumer variation with no practical limit on buffer size.§§§Unbounded-buffer
+3§§§It is the producer-consumer variation with a fixed buffer size.§§§Bounded-buffer
+3§§§It is an area of memory shared among processes that want to communicate.§§§Shared memory
+3§§§These, not the OS, control communication in the shared-memory model.§§§User processes
+3§§§It is the major issue in shared-memory IPC.§§§Synchronization
+3§§§It is the buffer size defined in the bounded-buffer shared-memory solution.§§§10
+3§§§These are the shared variables initialized in the first bounded-buffer solution.§§§buffer, in, and out
+3§§§It is the limitation of the first bounded-buffer solution.§§§It can use only BUFFER_SIZE - 1 elements
+3§§§This condition makes the producer wait in the first shared-memory solution.§§§(in + 1) % BUFFER_SIZE == out
+3§§§This condition makes the consumer wait in the first shared-memory solution.§§§in == out
+3§§§It is added to allow all buffers to be filled.§§§Counter
+3§§§This is the initial value of the counter.§§§0
+3§§§The producer waits when the counter reaches this condition.§§§counter == BUFFER_SIZE
+3§§§The consumer waits when the counter reaches this condition.§§§counter == 0
+3§§§It is the problem shown when producer and consumer update the same counter without protection.§§§Race condition
+3§§§These are the three steps of counter++ in the slide.§§§Load counter, add 1, store result
+3§§§These are the three steps of counter-- in the slide.§§§Load counter, subtract 1, store result
+3§§§It is the initial count value used in the race-condition example.§§§5
+3§§§It is the final incorrect counter value after the interleaving example.§§§4
+3§§§This chapter is said to explain more about why the first solution avoided the race condition.§§§Chapter 6
+3§§§It is the IPC model where processes communicate without shared variables.§§§Message passing
+3§§§These are the two basic IPC operations in message passing.§§§send(message) and receive(message)
+3§§§It can be fixed or variable in message passing.§§§Message size
+3§§§These are the two requirements if P and Q wish to communicate.§§§Establish a communication link and exchange messages
+3§§§These are the physical implementations of a communication link.§§§Shared memory, hardware bus, and network
+3§§§These are the logical implementations of a communication link.§§§Direct or indirect, synchronous or asynchronous, automatic or explicit buffering
+3§§§It requires processes to name each other explicitly.§§§Direct communication
+3§§§This is the send primitive in direct communication.§§§send(P, message)
+3§§§This is the receive primitive in direct communication.§§§receive(Q, message)
+3§§§These are the key link properties of direct communication.§§§Automatic link, one pair, one link, usually bidirectional
+3§§§It uses mailboxes or ports to send and receive messages.§§§Indirect communication
+3§§§It is the requirement for communication in the indirect model.§§§Shared mailbox
+3§§§These are the operations for mailboxes.§§§Create, send/receive, and delete
+3§§§These are the mailbox primitives.§§§send(A, message) and receive(A, message)
+3§§§These processes share mailbox A in the example.§§§P1, P2, and P3
+3§§§These are the three solutions to the mailbox-sharing problem.§§§At most two processes per link, only one receiver at a time, or system chooses receiver
+3§§§It is the synchronous form of message passing.§§§Blocking
+3§§§It blocks the sender until the message is received.§§§Blocking send
+3§§§It blocks the receiver until a message is available.§§§Blocking receive
+3§§§It is the asynchronous form of message passing.§§§Non-blocking
+3§§§It lets the sender continue immediately after sending.§§§Non-blocking send
+3§§§It returns either a valid message or a null message.§§§Non-blocking receive
+3§§§It occurs when both send and receive are blocking.§§§Rendezvous
+3§§§It is the queue of messages attached to the communication link.§§§Buffer
+3§§§It means no messages are queued and the sender must wait for the receiver.§§§Zero capacity
+3§§§It means the queue has a finite length of n messages.§§§Bounded capacity
+3§§§It means the queue has infinite length and the sender never waits.§§§Unbounded capacity
+3§§§It is the POSIX function used to create or open a shared-memory segment.§§§shm_open()
+3§§§It sets the size of the POSIX shared-memory object.§§§ftruncate()
+3§§§It memory-maps a file pointer to the shared-memory object.§§§mmap()
+3§§§It is the IPC system in which even system calls are messages.§§§Mach
+3§§§These are the two ports each task gets at creation in Mach.§§§Kernel and Notify
+3§§§It is the Mach function used to send and receive messages.§§§mach_msg()
+3§§§It creates ports in Mach.§§§mach_port_allocate()
+3§§§These are the four options if a Mach mailbox is full.§§§Wait indefinitely, wait n milliseconds, return immediately, or temporarily cache a message
+3§§§It is the Windows facility described as message-passing centric and local only.§§§LPC
+3§§§They are used by Windows LPC to establish and maintain communication channels.§§§Ports
+3§§§These are the four basic steps of Windows LPC communication.§§§Open handle, send request, server creates private ports, exchange messages and replies
+3§§§It acts as a conduit allowing two processes to communicate.§§§Pipe
+3§§§They cannot be accessed from outside the process that created them.§§§Ordinary pipes
+3§§§It is the typical relationship required by ordinary pipes.§§§Parent-child relationship
+3§§§It is the producer side of an ordinary pipe.§§§Write end
+3§§§It is the consumer side of an ordinary pipe.§§§Read end
+3§§§This is how ordinary pipes are described in direction.§§§Unidirectional
+3§§§This is what Windows calls ordinary pipes.§§§Anonymous pipes
+3§§§They can be used without a parent-child relationship.§§§Named pipes
+3§§§This is how named-pipe communication is described.§§§Bidirectional
+3§§§These systems provide named pipes.§§§UNIX and Windows
+3§§§These are the client-server communication methods in the chapter.§§§Sockets and RPC
+3§§§It is an endpoint for communication.§§§Socket
+3§§§It is made of an IP address plus a port.§§§Socket
+3§§§It differentiates network services on a host.§§§Port
+3§§§It is the special loopback IP address.§§§127.0.0.1
+3§§§These ports are well-known and used for standard services.§§§Ports below 1024
+3§§§These are the three Java socket types mentioned.§§§TCP, UDP, and MulticastSocket
+3§§§It is the connection-oriented Java socket type.§§§TCP
+3§§§It is the connectionless Java socket type.§§§UDP
+3§§§It sends data to multiple recipients.§§§MulticastSocket
+3§§§It abstracts procedure calls between processes on networked systems.§§§Remote Procedure Call
+3§§§They are used again in RPC for service differentiation.§§§Ports
+3§§§It is the client-side proxy for the actual server procedure.§§§Stub
+3§§§It finds the server and marshals the parameters.§§§Client-side stub
+3§§§It receives the message, unpacks parameters, and performs the procedure.§§§Server-side stub
+3§§§It is the Windows language used to specify stub code.§§§MIDL
+3§§§It is the data representation format used to account for different architectures.§§§External Data Representation (XDL)
+3§§§These are the two architecture byte orders mentioned.§§§Big-endian and little-endian
+3§§§It is the guarantee mentioned for message delivery in remote communication.§§§Exactly once
+3§§§It is the OS service that connects client and server in RPC.§§§Rendezvous or matchmaker service
+3§§§It is the figure or diagram named Process in Memory.§§§Process in Memory
+3§§§It is the figure or diagram named Memory Layout of a C Program.§§§Memory Layout of a C Program
+3§§§It is the figure or diagram named Diagram of Process State.§§§Diagram of Process State
+3§§§It is the figure or diagram named Ready and Wait Queues.§§§Ready and Wait Queues
+3§§§It is the figure or diagram named Representation of Process Scheduling.§§§Representation of Process Scheduling
+3§§§It is the figure or diagram named CPU Switch From Process to Process.§§§CPU Switch From Process to Process
+3§§§It is the figure or diagram named A Tree of Processes in Linux.§§§A Tree of Processes in Linux
+3§§§It is the figure or diagram named C Program Forking Separate Process.§§§C Program Forking Separate Process
+3§§§It is the figure or diagram named Creating a Separate Process via Windows API.§§§Creating a Separate Process via Windows API
+3§§§It is the figure or diagram named Communications Models.§§§Communications Models
+3§§§It is the figure or diagram named IPC POSIX Producer.§§§IPC POSIX Producer
+3§§§It is the figure or diagram named IPC POSIX Consumer.§§§IPC POSIX Consumer
+3§§§It is the figure or diagram named Mach Message Passing - Client.§§§Mach Message Passing - Client
+3§§§It is the figure or diagram named Mach Message Passing - Server.§§§Mach Message Passing - Server
+3§§§It is the figure or diagram named Local Procedure Calls in Windows.§§§Local Procedure Calls in Windows
+3§§§It is the figure or diagram named Socket Communication.§§§Socket Communication
+3§§§It is the figure or diagram named Execution of RPC.§§§Execution of RPC
+`;
+    const transesSections = [
+  {
+    "chapter": "2",
+    "title": "Chapter 2 Overview and Objectives",
+    "points": [
+      "Chapter 2 is about Operating-System Services.",
+      "Main topics: operating system services, user and operating-system interface, system calls, system services, linkers and loaders, why applications are operating system specific, design and implementation, operating system structure, building and booting an operating system, and operating system debugging.",
+      "Main goals: identify OS services, understand system calls, compare monolithic/layered/microkernel/modular/hybrid structures, explain booting, apply performance-monitoring tools, and design kernel modules for Linux."
+    ]
+  },
+  {
+    "chapter": "2",
+    "title": "Operating System Services",
+    "points": [
+      "An operating system provides an environment for program execution and offers services to users and programs.",
+      "User-oriented services include user interface, program execution, I/O operations, file-system manipulation, communications, and error detection.",
+      "The user interface may be CLI, GUI, touch-screen, or batch.",
+      "Program execution means loading a program into memory, running it, and ending it normally or abnormally.",
+      "File-system manipulation includes reading, writing, creating, deleting, searching, listing information, and permission management.",
+      "Communication may happen through shared memory or message passing.",
+      "Error detection may involve CPU, memory, I/O devices, or user programs.",
+      "System-oriented services include resource allocation, logging, protection, and security.",
+      "Resource allocation covers CPU cycles, main memory, file storage, and I/O devices.",
+      "Protection controls access to resources, while security involves user authentication and defense against invalid access attempts."
+    ]
+  },
+  {
+    "chapter": "2",
+    "title": "User and Operating-System Interface",
+    "points": [
+      "CLI allows direct command entry. The command interpreter may be in the kernel or provided by a systems program.",
+      "Multiple command interpreters are called shells.",
+      "The shell fetches commands from the user and executes them. Sometimes commands are built in; sometimes they are just names of programs.",
+      "GUI is a user-friendly desktop metaphor interface that uses icons, windows, menus, mouse, keyboard, and monitor.",
+      "The GUI concept was invented at Xerox PARC.",
+      "Many systems offer both CLI and GUI. Windows has a GUI with a command shell. Mac OS X uses the Aqua GUI over a UNIX-based core. Unix and Linux mainly use CLI with optional GUIs like CDE, KDE, and GNOME.",
+      "Touchscreen interfaces rely on gestures, virtual keyboards, and sometimes voice commands."
+    ]
+  },
+  {
+    "chapter": "2",
+    "title": "System Calls and APIs",
+    "points": [
+      "System calls are the programming interface to OS services.",
+      "They are typically written in high-level languages such as C or C++.",
+      "Programs usually access system calls through APIs rather than calling them directly.",
+      "Common APIs: Win32 API for Windows, POSIX API for UNIX/Linux/Mac OS X style systems, and Java API for the JVM.",
+      "Each system call is usually associated with a number. The system-call interface uses that number to invoke the correct kernel routine and return status or values.",
+      "The programmer does not need to know implementation details, only the API behavior.",
+      "A run-time support library hides most low-level details from the programmer."
+    ]
+  },
+  {
+    "chapter": "2",
+    "title": "System Call Parameter Passing and Types",
+    "points": [
+      "Parameters may be passed in registers, in a block/table in memory with its address passed in a register, or on the stack.",
+      "Block and stack methods do not limit parameter length or count. Linux and Solaris use the block/table approach.",
+      "Major system-call categories: process control, file management, device management, information maintenance, communications, and protection.",
+      "Process control includes create, terminate, load, execute, wait, signal events, allocate or free memory, debugging, and locking.",
+      "File management includes create, delete, open, close, read, write, reposition, and manage attributes.",
+      "Device management includes request and release devices plus read, write, reposition, and attribute operations.",
+      "Information maintenance includes getting or setting time, date, system data, and attributes.",
+      "Communication system calls handle connections, message passing, shared-memory regions, status transfer, and remote-device attachment.",
+      "Protection calls control access, permissions, and allow or deny user access."
+    ]
+  },
+  {
+    "chapter": "2",
+    "title": "Examples and System Services",
+    "points": [
+      "In the standard C library example, printf() eventually uses the write() system call.",
+      "Arduino is presented as a single-tasking environment without a full operating system. A boot loader loads the program into flash memory.",
+      "FreeBSD is shown as a multitasking UNIX variant. A shell uses fork() to create a process and exec() to load a new program. The parent may wait() for the child to end.",
+      "System programs provide a convenient environment for program development and execution.",
+      "Major categories of system services: file manipulation, status information, file modification, programming-language support, program loading and execution, communications, background services, and application programs.",
+      "Background services are also called services, subsystems, or daemons."
+    ]
+  },
+  {
+    "chapter": "2",
+    "title": "Linkers, Loaders, and Application Portability",
+    "points": [
+      "Source code is compiled into relocatable object files.",
+      "The linker combines object files and libraries into a binary executable file.",
+      "The loader brings the executable into memory for execution.",
+      "Relocation assigns final addresses to program parts and adjusts code and data accordingly.",
+      "Modern systems often use dynamically linked libraries (DLLs in Windows) instead of statically linking everything into the executable.",
+      "Applications are often OS-specific because each OS has its own system calls, file formats, and binary conventions.",
+      "Programs can become multi-OS by using interpreted languages, a virtual machine such as Java, or by recompiling source code for each target OS.",
+      "ABI or Application Binary Interface is the architecture-level equivalent of an API."
+    ]
+  },
+  {
+    "chapter": "2",
+    "title": "Design, Policy vs Mechanism, and Implementation",
+    "points": [
+      "OS design starts by defining goals and specifications.",
+      "User goals include convenience, ease of learning, reliability, safety, and speed.",
+      "System goals include ease of design, implementation, maintenance, flexibility, reliability, error-freedom, and efficiency.",
+      "Policy means what must be done. Mechanism means how it is done.",
+      "Separating policy from mechanism is important because it makes the OS more flexible when policy changes.",
+      "Early operating systems were written in assembly language.",
+      "Later systems used languages such as Algol and PL/1, and now commonly use C and C++ with some assembly and scripting.",
+      "Higher-level languages make portability easier, but they may be slower than low-level code.",
+      "Emulation can let an OS run on non-native hardware."
+    ]
+  },
+  {
+    "chapter": "2",
+    "title": "Operating System Structures",
+    "points": [
+      "A general-purpose OS is a very large program, so structure matters.",
+      "Common structural approaches: simple structure, monolithic structure, layered design, microkernel, modules, and hybrid systems.",
+      "Original UNIX is essentially monolithic. It contains system programs and a kernel that provides the file system, CPU scheduling, memory management, and other core services.",
+      "Linux is often described as monolithic plus modular.",
+      "In a layered approach, the lowest layer is hardware and the highest layer is the user interface. Each layer uses only lower-level services.",
+      "A microkernel moves as much functionality as possible into user space and relies heavily on message passing.",
+      "Microkernels are easier to extend, port, secure, and make reliable, but they can suffer from communication overhead.",
+      "Loadable kernel modules let components be loaded on demand and communicate through known interfaces.",
+      "Hybrid systems combine multiple design styles to balance performance, security, and usability."
+    ]
+  },
+  {
+    "chapter": "2",
+    "title": "Mobile and Modern OS Examples",
+    "points": [
+      "Mac OS X and iOS use layered and hybrid ideas, with Mach-related components and BSD UNIX parts underneath the UI and programming frameworks.",
+      "iOS is Apple’s mobile OS for iPhone and iPad. It is based on Mac OS X ideas but runs on a different CPU architecture and uses Cocoa Touch APIs.",
+      "Android is developed by the Open Handset Alliance and is open source.",
+      "Android is based on a modified Linux kernel and includes process, memory, device-driver, and power management.",
+      "Android applications are commonly built with Java and Android APIs, then run through the Android runtime environment."
+    ]
+  },
+  {
+    "chapter": "2",
+    "title": "Building, Booting, and Debugging the OS",
+    "points": [
+      "To build an OS from scratch: write source code, configure it for the target system, compile it, install it, and boot the machine.",
+      "For Linux, typical steps include make menuconfig, make, make modules, make modules_install, and make install.",
+      "During boot, execution begins at a fixed memory location.",
+      "A bootstrap loader or BIOS/firmware locates the kernel, loads it into memory, and starts it.",
+      "Modern systems often use UEFI instead of classic BIOS.",
+      "GRUB is a common bootstrap loader and can choose kernels, versions, and boot options.",
+      "Debugging means finding and fixing bugs. Performance tuning means improving behavior by removing bottlenecks.",
+      "Important debugging terms: log files, core dump, crash dump, trace listings, and profiling.",
+      "Example tools include top, Windows Task Manager, strace, gdb, perf, tcpdump, BCC, DTrace, and disksnoop.py."
+    ]
+  },
+  {
+    "chapter": "3",
+    "title": "Chapter 3 Overview and Objectives",
+    "points": [
+      "Chapter 3 is about Processes.",
+      "Main topics: process concept, process scheduling, operations on processes, interprocess communication, IPC in shared-memory systems, IPC in message-passing systems, examples of IPC systems, and communication in client-server systems.",
+      "Main goals: identify process components, describe creation and termination, compare shared memory and message passing, design IPC using pipes and POSIX shared memory, explain sockets and RPC, and design Linux kernel modules."
+    ]
+  },
+  {
+    "chapter": "3",
+    "title": "Process Concept",
+    "points": [
+      "A process is a program in execution.",
+      "A single process executes sequentially; it does not normally execute instructions in parallel unless multiple threads are introduced.",
+      "Main process parts: text section (program code), current activity (program counter and registers), stack, data section, and heap.",
+      "The stack holds temporary data such as parameters, return addresses, and local variables.",
+      "The data section holds global variables, while the heap holds dynamically allocated memory.",
+      "A program is a passive entity stored on disk; a process is an active entity.",
+      "A program becomes a process when the executable is loaded into memory.",
+      "One program can correspond to several processes, such as when multiple users run the same executable."
+    ]
+  },
+  {
+    "chapter": "3",
+    "title": "Process States, PCB, and Threads",
+    "points": [
+      "A process changes state as it runs: new, running, waiting, ready, and terminated.",
+      "New means the process is being created.",
+      "Running means instructions are being executed.",
+      "Waiting means the process is waiting for an event.",
+      "Ready means the process is waiting to be assigned to a processor.",
+      "Terminated means the process has finished execution.",
+      "The Process Control Block or PCB stores all process-related information.",
+      "Typical PCB fields: process state, program counter, CPU registers, scheduling information, memory-management information, accounting information, and I/O status information.",
+      "A traditional process has one thread of execution. If multiple threads exist, the system must track multiple execution contexts."
+    ]
+  },
+  {
+    "chapter": "3",
+    "title": "Process Representation in Linux and Scheduling",
+    "points": [
+      "Linux represents a process using the task_struct structure.",
+      "Fields shown in the PPT include pid, state, time_slice, parent, children, files, and mm for address space.",
+      "The process scheduler chooses which available process will execute next on the CPU.",
+      "Its goal is to maximize CPU use and switch processes efficiently.",
+      "The ready queue contains processes in main memory that are ready to run.",
+      "Wait queues contain processes waiting for events such as I/O.",
+      "Processes move among these queues as conditions change."
+    ]
+  },
+  {
+    "chapter": "3",
+    "title": "Context Switch and Mobile Multitasking",
+    "points": [
+      "A context switch occurs when the CPU changes from one process to another.",
+      "The system saves the old process context and loads the new one using the PCB.",
+      "Context-switch time is pure overhead because no useful work is done during the switch.",
+      "The more complex the OS and PCB, the more expensive the switch can become.",
+      "Some hardware reduces switch overhead by supporting multiple register sets.",
+      "Mobile systems manage multitasking differently. Early iOS focused on one foreground process with tightly controlled background behavior.",
+      "Android allows more flexible background processing through services that can continue running without a user interface."
+    ]
+  },
+  {
+    "chapter": "3",
+    "title": "Process Creation and Termination",
+    "points": [
+      "The system must support both process creation and process termination.",
+      "Parent processes create child processes, forming a process tree.",
+      "Resource sharing options: share all resources, share a subset, or share none.",
+      "Execution options: parent and child may execute concurrently, or the parent may wait for the child to finish.",
+      "Address-space options: child may duplicate the parent or load a different program.",
+      "In UNIX, fork() creates a new process and exec() replaces the memory image with a new program.",
+      "wait() lets the parent wait for child termination.",
+      "A normal process ends by calling exit(). The OS then deallocates its resources.",
+      "A parent may terminate a child with abort() if needed.",
+      "If a parent does not collect a terminated child, the child becomes a zombie. If the parent exits first, the child may become an orphan.",
+      "Some systems enforce cascading termination, where children are terminated if the parent ends."
+    ]
+  },
+  {
+    "chapter": "3",
+    "title": "Android Importance and Chrome Multiprocess Architecture",
+    "points": [
+      "Android may terminate processes to recover resources such as memory.",
+      "Importance order from most to least: foreground, visible, service, background, empty.",
+      "Chrome uses a multiprocess architecture instead of one single process.",
+      "The browser process handles the user interface and I/O.",
+      "Renderer processes display web pages and handle HTML and JavaScript.",
+      "Renderer processes run in a sandbox to limit the effects of faults or security exploits.",
+      "Plug-ins may also run in their own dedicated processes."
+    ]
+  },
+  {
+    "chapter": "3",
+    "title": "Interprocess Communication and Producer-Consumer",
+    "points": [
+      "Processes can be independent or cooperating.",
+      "Cooperating processes may share data and affect one another.",
+      "Reasons for cooperation: information sharing, computation speedup, modularity, and convenience.",
+      "Two main IPC models: shared memory and message passing.",
+      "Producer-consumer is a classic IPC problem.",
+      "In the unbounded-buffer version, the producer never waits but the consumer waits if the buffer is empty.",
+      "In the bounded-buffer version, the producer waits when the buffer is full and the consumer waits when it is empty."
+    ]
+  },
+  {
+    "chapter": "3",
+    "title": "IPC in Shared Memory",
+    "points": [
+      "Shared memory is a memory area accessible by the processes that need to communicate.",
+      "The user processes control the communication rather than the OS after setup.",
+      "The main issue is synchronization so that processes do not interfere with one another.",
+      "The bounded-buffer shared-memory example uses BUFFER_SIZE, a buffer array, and in/out pointers.",
+      "The first solution can use only BUFFER_SIZE - 1 slots to distinguish full from empty.",
+      "A producer waits when advancing in would collide with out.",
+      "A consumer waits when in equals out.",
+      "A second approach uses a counter to track the number of full buffers so all buffers can be used.",
+      "This second approach introduces the possibility of race conditions if counter updates are not synchronized."
+    ]
+  },
+  {
+    "chapter": "3",
+    "title": "Race Condition and Message Passing",
+    "points": [
+      "A race condition occurs when concurrent updates produce incorrect results because operations interleave unpredictably.",
+      "The PPT shows how counter++ and counter-- can conflict when producer and consumer interleave their steps.",
+      "In message passing, processes communicate without shared variables.",
+      "Basic operations are send(message) and receive(message).",
+      "Messages may be fixed-size or variable-size.",
+      "Before communication, processes need a communication link and a way to exchange messages.",
+      "Important design issues include how links are established, capacity, message size, direction, and whether more than two processes can share a link."
+    ]
+  },
+  {
+    "chapter": "3",
+    "title": "Direct and Indirect Communication",
+    "points": [
+      "Physical communication links may use shared memory, a hardware bus, or a network.",
+      "Logical communication styles may be direct or indirect, synchronous or asynchronous, and use automatic or explicit buffering.",
+      "Direct communication requires processes to name one another explicitly, such as send(P, message) and receive(Q, message).",
+      "Direct links are automatically established and are usually associated with exactly one pair of processes.",
+      "Indirect communication uses mailboxes or ports.",
+      "Each mailbox has a unique identifier.",
+      "Processes communicate only if they share a mailbox.",
+      "A mailbox link may involve many processes, and multiple links may exist between the same pair of processes.",
+      "The system must define how mailbox-sharing conflicts are handled when multiple receivers are possible."
+    ]
+  },
+  {
+    "chapter": "3",
+    "title": "Synchronization and Buffering in Message Passing",
+    "points": [
+      "Blocking communication is synchronous.",
+      "Blocking send means the sender waits until the message is received.",
+      "Blocking receive means the receiver waits until a message arrives.",
+      "Non-blocking communication is asynchronous.",
+      "Non-blocking send lets the sender continue immediately.",
+      "Non-blocking receive returns either a valid message or a null result.",
+      "If both send and receive are blocking, the interaction is called a rendezvous.",
+      "Messages are often stored in a queue attached to the communication link.",
+      "Buffering can have zero capacity, bounded capacity, or unbounded capacity.",
+      "Zero-capacity buffering forces sender and receiver to meet directly.",
+      "Bounded capacity allows up to n queued messages.",
+      "Unbounded capacity lets the sender continue without waiting."
+    ]
+  },
+  {
+    "chapter": "3",
+    "title": "Examples of IPC Systems",
+    "points": [
+      "POSIX shared memory uses shm_open() to create or open a shared-memory object.",
+      "ftruncate() sets the object size.",
+      "mmap() maps the shared object into the process address space for reading and writing.",
+      "Mach uses message-based communication. Even system calls are treated as messages.",
+      "A task receives kernel and notify ports at creation.",
+      "mach_msg() sends and receives messages, while mach_port_allocate() creates ports.",
+      "Windows uses advanced local procedure call or LPC for message-passing on the same machine.",
+      "The client opens a connection port, sends a request, the server creates private ports, and both sides exchange messages through those ports."
+    ]
+  },
+  {
+    "chapter": "3",
+    "title": "Pipes, Sockets, and Remote Procedure Calls",
+    "points": [
+      "A pipe is a conduit that allows two processes to communicate.",
+      "Ordinary pipes are typically unidirectional and usually require a parent-child relationship.",
+      "Windows calls ordinary pipes anonymous pipes.",
+      "Named pipes are more flexible: they can be bidirectional and do not require a parent-child relationship.",
+      "Sockets are endpoints for communication and are identified by IP address plus port number.",
+      "Communication takes place between a pair of sockets.",
+      "Ports below 1024 are well known for standard services.",
+      "127.0.0.1 is the loopback address for the local system.",
+      "In Java, socket types include TCP, UDP, and MulticastSocket.",
+      "RPC abstracts procedure calls over a network.",
+      "Client-side stubs locate the server and marshal parameters.",
+      "Server-side stubs unpack parameters and execute the procedure.",
+      "RPC must also handle data representation differences such as big-endian vs little-endian systems and additional network failure cases."
+    ]
+  }
+];
+
+    const cards = rawCards
+      .trim()
+      .split('\n')
+      .map(line => line.split('§§§'))
+      .filter(parts => parts.length === 3)
+      .map(([chapter, question, answer], index) => ({
+        id: index + 1,
+        chapter,
+        question: question.trim(),
+        answer: answer.trim()
+      }));
+
+    const chapterFilter = document.getElementById('chapterFilter');
+    const searchInput = document.getElementById('searchInput');
+    const modeSelect = document.getElementById('modeSelect');
+    const jumpInput = document.getElementById('jumpInput');
+    const showingCount = document.getElementById('showingCount');
+    const currentPosition = document.getElementById('currentPosition');
+    const currentSide = document.getElementById('currentSide');
+    const progressFill = document.getElementById('progressFill');
+    const contentArea = document.getElementById('contentArea');
+    const prevBtn = document.getElementById('prevBtn');
+    const flipBtn = document.getElementById('flipBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const shuffleBtn = document.getElementById('shuffleBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const flashcardsViewBtn = document.getElementById('flashcardsViewBtn');
+    const transesViewBtn = document.getElementById('transesViewBtn');
+    const flashcardButtons = document.getElementById('flashcardButtons');
+    const orderBox = document.getElementById('orderBox');
+    const jumpBox = document.getElementById('jumpBox');
+    const notesToolsBox = document.getElementById('notesToolsBox');
+    const expandAllBtn = document.getElementById('expandAllBtn');
+    const collapseAllBtn = document.getElementById('collapseAllBtn');
+    const countLabel = document.getElementById('countLabel');
+    const positionLabel = document.getElementById('positionLabel');
+    const sideLabel = document.getElementById('sideLabel');
+    const modeStatus = document.getElementById('modeStatus');
+
+    let studyView = 'flashcards';
+    let filteredCards = [...cards];
+    let filteredNotes = [...transesSections];
+    let currentIndex = 0;
+    let flipped = false;
+
+    function shuffleArray(arr) {
+      const copy = [...arr];
+      for (let i = copy.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy;
+    }
+
+    function escapeHtml(text) {
+      return text
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function saveState() {
+      const state = {
+        chapter: chapterFilter.value,
+        search: searchInput.value,
+        orderMode: modeSelect.value,
+        currentIndex,
+        flipped,
+        studyView
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+
+    function loadState() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
+        if (!saved) return;
+        chapterFilter.value = saved.chapter || 'all';
+        searchInput.value = saved.search || '';
+        modeSelect.value = saved.orderMode || 'normal';
+        currentIndex = Number(saved.currentIndex || 0);
+        flipped = Boolean(saved.flipped);
+        studyView = saved.studyView || 'flashcards';
+      } catch (e) {
+        // ignore bad state
+      }
+    }
+
+    function setView(view) {
+      studyView = view;
+      flashcardsViewBtn.classList.toggle('active', view === 'flashcards');
+      transesViewBtn.classList.toggle('active', view === 'transes');
+      flashcardButtons.classList.toggle('hidden', view !== 'flashcards');
+      orderBox.classList.toggle('hidden', view !== 'flashcards');
+      jumpBox.classList.toggle('hidden', view !== 'flashcards');
+      notesToolsBox.classList.toggle('hidden', view !== 'transes');
+      modeStatus.textContent = view === 'flashcards' ? 'Flashcards' : 'PPT Transes';
+      applyFilters(true);
+    }
+
+    function applyFilters(keepIndex = false) {
+      const chapter = chapterFilter.value;
+      const keyword = searchInput.value.trim().toLowerCase();
+
+      filteredCards = cards.filter(card => {
+        const chapterMatch = chapter === 'all' || card.chapter === chapter;
+        const textMatch = !keyword || card.question.toLowerCase().includes(keyword) || card.answer.toLowerCase().includes(keyword);
+        return chapterMatch && textMatch;
+      });
+
+      filteredNotes = transesSections.filter(section => {
+        const chapterMatch = chapter === 'all' || section.chapter === chapter;
+        const sectionText = [section.title, ...(section.points || [])].join(' ').toLowerCase();
+        const textMatch = !keyword || sectionText.includes(keyword);
+        return chapterMatch && textMatch;
+      });
+
+      if (modeSelect.value === 'random' && studyView === 'flashcards') {
+        filteredCards = shuffleArray(filteredCards);
+      }
+
+      if (!keepIndex) currentIndex = 0;
+      if (currentIndex >= filteredCards.length) currentIndex = 0;
+      if (!keepIndex) flipped = false;
+      render();
+    }
+
+    function updateStats() {
+      if (studyView === 'flashcards') {
+        countLabel.textContent = 'Showing';
+        positionLabel.textContent = 'Current Card';
+        sideLabel.textContent = 'Current Side';
+        showingCount.textContent = filteredCards.length;
+        currentSide.textContent = flipped ? 'Answer' : 'Question';
+        currentPosition.textContent = filteredCards.length ? `${currentIndex + 1} / ${filteredCards.length}` : '0 / 0';
+        const percent = filteredCards.length ? ((currentIndex + 1) / filteredCards.length) * 100 : 0;
+        progressFill.style.width = `${percent}%`;
+      } else {
+        countLabel.textContent = 'Sections';
+        positionLabel.textContent = 'Reading View';
+        sideLabel.textContent = 'Current Mode';
+        showingCount.textContent = filteredNotes.length;
+        currentPosition.textContent = chapterFilter.value === 'all' ? 'All Chapters' : `Chapter ${chapterFilter.value}`;
+        currentSide.textContent = 'Notes';
+        progressFill.style.width = filteredNotes.length ? '100%' : '0%';
+      }
+    }
+
+    function renderFlashcards() {
+      if (!filteredCards.length) {
+        contentArea.innerHTML = `
+          <div class="empty">
+            <h2>No flashcards found.</h2>
+            <p>Try another keyword, change chapter, or press Reset Filters.</p>
+          </div>
+        `;
+        saveState();
+        return;
+      }
+
+      if (currentIndex < 0) currentIndex = 0;
+      if (currentIndex >= filteredCards.length) currentIndex = filteredCards.length - 1;
+
+      const card = filteredCards[currentIndex];
+      contentArea.innerHTML = `
+        <div class="card-wrap">
+          <div class="card ${flipped ? 'flipped' : ''}" id="flashcard">
+            <div class="face front">
+              <div>
+                <div class="chapter-badge">Chapter ${card.chapter}</div>
+                <p class="prompt-label">Question</p>
+                <div class="card-text">${escapeHtml(card.question)}</div>
+              </div>
+              <div class="hint">Tap to flip. Swipe left for next. Swipe right for previous.</div>
+            </div>
+            <div class="face back">
+              <div>
+                <div class="chapter-badge">Chapter ${card.chapter}</div>
+                <p class="prompt-label">Answer</p>
+                <div class="card-text">${escapeHtml(card.answer)}</div>
+              </div>
+              <div class="hint">Your position is saved on this device so you can continue later.</div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      const flashcard = document.getElementById('flashcard');
+      let startX = 0;
+      let startY = 0;
+      let moved = false;
+
+      flashcard.addEventListener('click', () => {
+        if (moved) return;
+        flipped = !flipped;
+        render();
+      });
+
+      flashcard.addEventListener('touchstart', (e) => {
+        const touch = e.changedTouches[0];
+        startX = touch.clientX;
+        startY = touch.clientY;
+        moved = false;
+      }, { passive: true });
+
+      flashcard.addEventListener('touchmove', () => {
+        moved = true;
+      }, { passive: true });
+
+      flashcard.addEventListener('touchend', (e) => {
+        const touch = e.changedTouches[0];
+        const diffX = touch.clientX - startX;
+        const diffY = touch.clientY - startY;
+
+        if (Math.abs(diffX) > 60 && Math.abs(diffX) > Math.abs(diffY)) {
+          if (diffX < 0) nextCard();
+          else prevCard();
+          return;
+        }
+
+        if (Math.abs(diffX) < 10 && Math.abs(diffY) < 10) {
+          flipped = !flipped;
+          render();
+        }
+      }, { passive: true });
+
+      saveState();
+    }
+
+    function renderTranses() {
+      if (!filteredNotes.length) {
+        contentArea.innerHTML = `
+          <div class="empty">
+            <h2>No transes found.</h2>
+            <p>Try another keyword or change the chapter filter.</p>
+          </div>
+        `;
+        saveState();
+        return;
+      }
+
+      const cardsHtml = filteredNotes.map((section, idx) => `
+        <details class="note-card" ${idx < 2 ? 'open' : ''}>
+          <summary>
+            <div class="summary-left">
+              <span class="chapter-badge">Chapter ${section.chapter}</span>
+              <span class="summary-title">${escapeHtml(section.title)}</span>
+            </div>
+            <span class="summary-arrow">⌄</span>
+          </summary>
+          <div class="note-body">
+            <ul>
+              ${section.points.map(point => `<li>${escapeHtml(point)}</li>`).join('')}
+            </ul>
+          </div>
+        </details>
+      `).join('');
+
+      contentArea.innerHTML = `<div class="notes-container">${cardsHtml}</div>`;
+      saveState();
+    }
+
+    function render() {
+      updateStats();
+      if (studyView === 'flashcards') renderFlashcards();
+      else renderTranses();
+    }
+
+    function nextCard() {
+      if (studyView !== 'flashcards' || !filteredCards.length) return;
+      currentIndex = (currentIndex + 1) % filteredCards.length;
+      flipped = false;
+      render();
+    }
+
+    function prevCard() {
+      if (studyView !== 'flashcards' || !filteredCards.length) return;
+      currentIndex = (currentIndex - 1 + filteredCards.length) % filteredCards.length;
+      flipped = false;
+      render();
+    }
+
+    function expandAllNotes(openState) {
+      document.querySelectorAll('.note-card').forEach(item => {
+        item.open = openState;
+      });
+    }
+
+    prevBtn.addEventListener('click', prevCard);
+    nextBtn.addEventListener('click', nextCard);
+
+    flipBtn.addEventListener('click', () => {
+      if (studyView !== 'flashcards' || !filteredCards.length) return;
+      flipped = !flipped;
+      render();
+    });
+
+    shuffleBtn.addEventListener('click', () => {
+      if (studyView !== 'flashcards') return;
+      filteredCards = shuffleArray(filteredCards);
+      currentIndex = 0;
+      flipped = false;
+      render();
+    });
+
+    resetBtn.addEventListener('click', () => {
+      chapterFilter.value = 'all';
+      searchInput.value = '';
+      modeSelect.value = 'normal';
+      jumpInput.value = '';
+      currentIndex = 0;
+      flipped = false;
+      applyFilters();
+    });
+
+    flashcardsViewBtn.addEventListener('click', () => setView('flashcards'));
+    transesViewBtn.addEventListener('click', () => setView('transes'));
+    chapterFilter.addEventListener('change', () => applyFilters());
+    searchInput.addEventListener('input', () => applyFilters());
+    modeSelect.addEventListener('change', () => applyFilters());
+    expandAllBtn.addEventListener('click', () => expandAllNotes(true));
+    collapseAllBtn.addEventListener('click', () => expandAllNotes(false));
+
+    jumpInput.addEventListener('change', () => {
+      if (studyView !== 'flashcards' || !filteredCards.length) return;
+      const requested = Number(jumpInput.value);
+      if (!requested || requested < 1 || requested > filteredCards.length) return;
+      currentIndex = requested - 1;
+      flipped = false;
+      render();
+    });
+
+    document.addEventListener('keydown', (event) => {
+      const tag = document.activeElement ? document.activeElement.tagName : '';
+      if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA') return;
+      if (studyView === 'flashcards') {
+        if (event.code === 'Space') {
+          event.preventDefault();
+          if (!filteredCards.length) return;
+          flipped = !flipped;
+          render();
+        }
+        if (event.key === 'ArrowRight') nextCard();
+        if (event.key === 'ArrowLeft') prevCard();
+      }
+    });
+
+    loadState();
+    setView(studyView);
+  </script>
+</body>
+</html>
